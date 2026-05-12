@@ -7,3 +7,7 @@
  */
 
 export * from "./healthStatus";
+export * from "./triageInput";
+export * from "./triageResult";
+export * from "./triageResults";
+export * from "./triageResultUrgency";

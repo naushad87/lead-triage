@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: triage
+    description: Lead triage operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /triage:
+    post:
+      operationId: triageMessages
+      tags: [triage]
+      summary: Triage inbound messages
+      description: Takes up to 5 inbound messages and returns lead category, urgency, next action, and draft reply for each
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TriageInput"
+      responses:
+        "200":
+          description: Triage results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TriageResults"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +54,43 @@ components:
           type: string
       required:
         - status
-
+    TriageInput:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 5
+    TriageResult:
+      type: object
+      required:
+        - message
+        - leadCategory
+        - urgency
+        - nextAction
+        - draftReply
+      properties:
+        message:
+          type: string
+        leadCategory:
+          type: string
+        urgency:
+          type: string
+          enum: [high, medium, low]
+        nextAction:
+          type: string
+        draftReply:
+          type: string
+    TriageResults:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/TriageResult"

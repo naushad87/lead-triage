@@ -14,3 +14,25 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Takes up to 5 inbound messages and returns lead category, urgency, next action, and draft reply for each
+ * @summary Triage inbound messages
+ */
+export const triageMessagesBodyMessagesMax = 5;
+
+export const TriageMessagesBody = zod.object({
+  messages: zod.array(zod.string()).min(1).max(triageMessagesBodyMessagesMax),
+});
+
+export const TriageMessagesResponse = zod.object({
+  results: zod.array(
+    zod.object({
+      message: zod.string(),
+      leadCategory: zod.string(),
+      urgency: zod.enum(["high", "medium", "low"]),
+      nextAction: zod.string(),
+      draftReply: zod.string(),
+    }),
+  ),
+});

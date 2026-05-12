@@ -5,18 +5,21 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type { HealthStatus, TriageInput, TriageResults } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +102,90 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Takes up to 5 inbound messages and returns lead category, urgency, next action, and draft reply for each
+ * @summary Triage inbound messages
+ */
+export const getTriageMessagesUrl = () => {
+  return `/api/triage`;
+};
+
+export const triageMessages = async (
+  triageInput: TriageInput,
+  options?: RequestInit,
+): Promise<TriageResults> => {
+  return customFetch<TriageResults>(getTriageMessagesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(triageInput),
+  });
+};
+
+export const getTriageMessagesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof triageMessages>>,
+    TError,
+    { data: BodyType<TriageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof triageMessages>>,
+  TError,
+  { data: BodyType<TriageInput> },
+  TContext
+> => {
+  const mutationKey = ["triageMessages"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof triageMessages>>,
+    { data: BodyType<TriageInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return triageMessages(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TriageMessagesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof triageMessages>>
+>;
+export type TriageMessagesMutationBody = BodyType<TriageInput>;
+export type TriageMessagesMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Triage inbound messages
+ */
+export const useTriageMessages = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof triageMessages>>,
+    TError,
+    { data: BodyType<TriageInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof triageMessages>>,
+  TError,
+  { data: BodyType<TriageInput> },
+  TContext
+> => {
+  return useMutation(getTriageMessagesMutationOptions(options));
+};

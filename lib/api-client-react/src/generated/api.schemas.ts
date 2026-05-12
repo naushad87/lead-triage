@@ -8,3 +8,32 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface TriageInput {
+  /**
+   * @minItems 1
+   * @maxItems 5
+   */
+  messages: string[];
+}
+
+export type TriageResultUrgency =
+  (typeof TriageResultUrgency)[keyof typeof TriageResultUrgency];
+
+export const TriageResultUrgency = {
+  high: "high",
+  medium: "medium",
+  low: "low",
+} as const;
+
+export interface TriageResult {
+  message: string;
+  leadCategory: string;
+  urgency: TriageResultUrgency;
+  nextAction: string;
+  draftReply: string;
+}
+
+export interface TriageResults {
+  results: TriageResult[];
+}
