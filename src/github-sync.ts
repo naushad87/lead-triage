@@ -102,8 +102,9 @@ async function main(): Promise<void> {
     )) as { object: { sha: string } };
     remoteSha = refData.object.sha;
     console.log(`Remote HEAD (GitHub): ${remoteSha}`);
-  } catch {
-    console.log("Remote ref not found — will create it");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.log(`Remote ref not found (${msg}) — will create it`);
   }
 
   const trackedLines = git("ls-tree -r HEAD").split("\n").filter(Boolean);
@@ -131,8 +132,9 @@ async function main(): Promise<void> {
           remoteBlobs[item.path] = item.sha;
         }
       }
-    } catch {
-      console.log("Could not fetch remote tree — uploading all files");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`Could not fetch remote tree (${msg}) — uploading all files`);
     }
   }
 
